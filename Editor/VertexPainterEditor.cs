@@ -59,7 +59,10 @@ public class VertexPainterEditor : Editor
 		if(m_painter == null)
 			m_painter = (VertexPainter) target;
 
-		m_painter.SelectedObject = HandleUtility.PickGameObject(Event.current.mousePosition,false);
+        if(Event.current.isMouse)
+        {
+            m_painter.SelectedObject = HandleUtility.PickGameObject(Event.current.mousePosition, false);
+        }
 
 		if(m_painter.SelectedObject == null)
 		{
