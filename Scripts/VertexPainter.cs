@@ -105,6 +105,16 @@ public class VertexPainter : MonoBehaviour
 	}
 
 	/// <summary>
+	/// Brush fall off.
+	/// </summary>
+	/// <value>The brush falloff.</value>
+	[UnityEngine.SerializeField]
+	public AnimationCurve BrushFalloff
+	{
+		get; set;
+	}
+
+	/// <summary>
 	/// Color channel in which brush paints vertices.
 	/// </summary>
 	/// <value>The color of the brush.</value>
@@ -155,6 +165,15 @@ public class VertexPainter : MonoBehaviour
 		}
 	}
 	
+	#endregion
+
+	#region Constructor
+
+	public VertexPainter()
+	{
+		BrushFalloff = new AnimationCurve();
+	}
+
 	#endregion
 
 	#region Public Methods
