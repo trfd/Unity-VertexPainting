@@ -43,7 +43,7 @@ public class VertexPainter : MonoBehaviour
 	/// Backup of original material current selected object is using.
 	/// When showing raw painting material is replaced.
 	/// </summary>
-	private Material m_objectBakcupMaterial;
+	private Material m_objectBackupMaterial;
 
 	/// <summary>
 	/// Color channel on which painter is currently painting.
@@ -68,12 +68,17 @@ public class VertexPainter : MonoBehaviour
 	/// <summary>
 	/// Holds whether or not the painter is showing preview.
 	/// </summary>
-	private bool m_isShowingPreview;
+	private bool m_isShowingPreview = false;
 
 	#endregion
 
 	#region Properties
 
+	/// <summary>
+	/// Material used to preview raw painting.
+	/// </summary>
+	/// <value>The preview material.</value>
+	[UnityEngine.SerializeField]
 	public Material PreviewMaterial
 	{
 		get; set;
@@ -83,11 +88,17 @@ public class VertexPainter : MonoBehaviour
 	/// Size of the brush, in world coordinates.
 	/// </summary>
 	/// <value>The pen radius.</value>
+	[UnityEngine.SerializeField]
 	public float BrushRadius
 	{
 		get; set;
 	}
 
+	/// <summary>
+	/// Intensity of brush 
+	/// </summary>
+	/// <value>The brush intensity.</value>
+	[UnityEngine.SerializeField]
 	public float BrushIntensity
 	{
 		get; set;
@@ -97,6 +108,7 @@ public class VertexPainter : MonoBehaviour
 	/// Color channel in which brush paints vertices.
 	/// </summary>
 	/// <value>The color of the brush.</value>
+	[UnityEngine.SerializeField]
 	public ColorChannel BrushChannel
 	{
 		get{ return m_currChannel;  }
@@ -127,6 +139,10 @@ public class VertexPainter : MonoBehaviour
 		get{ return m_currMesh; }
 	}
 
+	/// <summary>
+	/// Gets or sets a value indicating whether this instance is previewing raw painting.
+	/// </summary>
+	/// <value><c>true</c> if this instance is previewing raw; otherwise, <c>false</c>.</value>
 	public bool IsPreviewingRaw
 	{
 		get{ return m_isShowingPreview; }
@@ -135,7 +151,7 @@ public class VertexPainter : MonoBehaviour
 			if(m_isShowingPreview == value)
 				return;
 
-			ChangePreview(m_isShowingPreview);
+			ChangePreview(value);
 		}
 	}
 	
@@ -159,7 +175,7 @@ public class VertexPainter : MonoBehaviour
 			m_usedCollider = null;
 		}
 
-		if(m_objectBakcupMaterial != null)
+		if(m_objectBackupMaterial != null)
 		{
 			ChangePreview(false);
 		}
@@ -176,11 +192,11 @@ public class VertexPainter : MonoBehaviour
 			Debug.LogError("Vertex painter can not paint on object that does not contain any mesh");
 			m_selectedObject = null;
 			m_currMesh = null;
-			m_objectBakcupMaterial = null;
+			m_objectBackupMaterial = null;
 			return;
 		}
 
-		m_currMesh = filter.mesh;
+		m_currMesh = filter.sharedMesh;
 
 		if(m_selectedObject.GetComponent<Collider>() == null)
 		{
@@ -207,13 +223,15 @@ public class VertexPainter : MonoBehaviour
 
 		if(m_isShowingPreview)
 		{
-			m_objectBakcupMaterial = renderer.material;
+			m_objectBackupMaterial = renderer.sharedMaterial;
 			renderer.material = PreviewMaterial;
+			Debug.Log("Set Preview Material: "+this.PreviewMaterial);
 		}
 		else
 		{
-			renderer.material = m_objectBakcupMaterial;
-			m_objectBakcupMaterial = null;
+			renderer.material = m_objectBackupMaterial;
+			m_objectBackupMaterial = null;
+			Debug.Log("Unset Preview Material: "+this.PreviewMaterial);
 		}
 	}
 

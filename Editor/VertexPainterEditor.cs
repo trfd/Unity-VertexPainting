@@ -46,6 +46,8 @@ public class VertexPainterEditor : Editor
 
 	private bool m_advancedFoldout = false;
 
+	private RaycastHit m_lastRaycastHit;
+
 	#endregion
 
 	#region SceneGUI stuff
@@ -62,19 +64,17 @@ public class VertexPainterEditor : Editor
 
 
 		if(Event.current.isMouse)
-		{
-			RaycastHit hit;
-			
-			Physics.Raycast(HandleUtility.GUIPointToWorldRay(Event.current.mousePosition), out hit);
-
-			DrawBrush(hit.point,hit.normal);
+		{	
+			Physics.Raycast(HandleUtility.GUIPointToWorldRay(Event.current.mousePosition), out m_lastRaycastHit);
 
 			if(Event.current.type == EventType.MouseDown && Event.current.button == 0)
 			{
-				PaintVertices(hit.point);
+				PaintVertices(m_lastRaycastHit.point);
 				Event.current.Use();
 			}
 		}
+
+		DrawBrush(m_lastRaycastHit.point,m_lastRaycastHit.normal);
 
 		HandleUtility.AddDefaultControl(GUIUtility.GetControlID(FocusType.Passive));
 	}
@@ -85,7 +85,7 @@ public class VertexPainterEditor : Editor
 	/// <param name="penPoint">brushPosition.</param>
 	private void PaintVertices(Vector3 brushPosition)
 	{
-		Mesh mesh = m_painter.SelectedObject.GetComponent<MeshFilter>().mesh;
+		Mesh mesh = m_painter.SelectedObject.GetComponent<MeshFilter>().sharedMesh;
 
 		if(mesh.colors == null || mesh.colors.Length != mesh.vertices.Length)
 		{
@@ -148,6 +148,9 @@ public class VertexPainterEditor : Editor
 
 	public override void OnInspectorGUI()
 	{
+		if(m_painter == null)
+			m_painter = (VertexPainter) target;
+
 		m_painter.BrushRadius = EditorGUILayout.Slider("Size",m_painter.BrushRadius,0,20);
 
 		m_painter.BrushIntensity = EditorGUILayout.Slider("Intensity",m_painter.BrushIntensity,-1,1);
