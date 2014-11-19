@@ -6,8 +6,8 @@ Material:
   m_ObjectHideFlags: 0
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 0}
-  m_Name: MatBlendPlain
-  m_Shader: {fileID: 4800000, guid: 8e037e5a0a4b72a4199227f2bdf270d7, type: 3}
+  m_Name: MatBlendOverlay
+  m_Shader: {fileID: 4800000, guid: 7b4ebdd1d1d6a33428333bbeede3f081, type: 3}
   m_ShaderKeywords: []
   m_CustomRenderQueue: -1
   m_SavedProperties:
@@ -17,21 +17,21 @@ Material:
         first:
           name: _MainTex
         second:
-          m_Texture: {fileID: 2800000, guid: 6bdb195738750488ba8152ad42baadd0, type: 3}
+          m_Texture: {fileID: 2800000, guid: ee8c1b8297ce2774ebfd7b2b174f8437, type: 3}
           m_Scale: {x: 1, y: 1}
           m_Offset: {x: 0, y: 0}
       data:
         first:
           name: _SecondTex
         second:
-          m_Texture: {fileID: 2800000, guid: cdebf78503fdf2c4bbd0c31157085ebe, type: 3}
+          m_Texture: {fileID: 2800000, guid: b9ff22e3a8ca25d49ad571c5f899c97e, type: 3}
           m_Scale: {x: 1, y: 1}
           m_Offset: {x: 0, y: 0}
     m_Floats:
       data:
         first:
           name: _NormalDisplacementIntensity
-        second: .300000012
+        second: .349999994
     m_Colors:
       data:
         first:

@@ -1,4 +1,4 @@
-﻿Shader "VertexPainting/BlendPlain" 
+﻿Shader "VertexPainting/BlendOverlay" 
 {
 	Properties 
 	{
@@ -46,9 +46,25 @@ SubShader
             return o;
         }
         
+		float4 white = float4(1.0,1.0,1.0,1.0);
+
         fixed4 frag (v2f i) : COLOR0 
 		{ 
-			return lerp(tex2D(_MainTex,i.uv),tex2D(_SecondTex,i.uv),i.color.r);
+			float4 base  = tex2D(_MainTex,i.uv);
+			float4 blend = lerp(base,tex2D(_SecondTex,i.uv),i.color.r);
+
+			float4 lumCoef = float4(0.2125,0.7154,0.0721,1.0);
+			float luminance = dot(lumCoef,base);
+			
+			if(luminance < 0.45)
+				return 2.0 * blend * base;
+
+			if(luminance > 0.55)
+				return white - 2.0 * (white - blend) * (white - base);
+
+			return lerp(2.0 * blend * base,
+						white - 2.0 * (white - blend) * (white - base),
+						(luminance * 0.45) * 10.0); 
 		}
         ENDCG
     }
