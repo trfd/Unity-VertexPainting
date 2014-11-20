@@ -47,11 +47,11 @@ SubShader
         }
         
 		float4 white = float4(1.0,1.0,1.0,1.0);
-
+		
         fixed4 frag (v2f i) : COLOR0 
 		{ 
-			float4 base  = tex2D(_MainTex,i.uv);
-			float4 blend = lerp(base,tex2D(_SecondTex,i.uv),i.color.r);
+			float4 base  = tex2D(_MainTex,i.uv.xy);
+			float4 blend = tex2D(_SecondTex,i.uv.xy);//lerp(base,tex2D(_SecondTex,i.uv.xy),i.color.r);
 
 			float4 lumCoef = float4(0.2125,0.7154,0.0721,1.0);
 			float luminance = dot(lumCoef,base);

@@ -6,8 +6,8 @@ Material:
   m_ObjectHideFlags: 0
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 0}
-  m_Name: MatBlendOverlay
-  m_Shader: {fileID: 4800000, guid: 6d286497224b4477d8f24c7eba77720a, type: 3}
+  m_Name: MatBlendHeight
+  m_Shader: {fileID: 4800000, guid: 90ed32cfc7f004c23a81f7e1f682da2e, type: 3}
   m_ShaderKeywords: []
   m_CustomRenderQueue: -1
   m_SavedProperties:
@@ -17,21 +17,36 @@ Material:
         first:
           name: _MainTex
         second:
-          m_Texture: {fileID: 2800000, guid: ee8c1b8297ce2774ebfd7b2b174f8437, type: 3}
+          m_Texture: {fileID: 2800000, guid: 626512df5eb444a38b3f3c956cdabca5, type: 3}
           m_Scale: {x: 1, y: 1}
           m_Offset: {x: 0, y: 0}
       data:
         first:
           name: _SecondTex
         second:
-          m_Texture: {fileID: 2800000, guid: b9ff22e3a8ca25d49ad571c5f899c97e, type: 3}
+          m_Texture: {fileID: 2800000, guid: 6743dcff734674f17bc4793011616cae, type: 3}
+          m_Scale: {x: 1, y: 1}
+          m_Offset: {x: 0, y: 0}
+      data:
+        first:
+          name: _HeightMap
+        second:
+          m_Texture: {fileID: 2800000, guid: 8aa5abb63a7c84d04bdc397f655804d8, type: 3}
           m_Scale: {x: 1, y: 1}
           m_Offset: {x: 0, y: 0}
     m_Floats:
       data:
         first:
           name: _NormalDisplacementIntensity
-        second: 1
+        second: 8
+      data:
+        first:
+          name: _HeightIntensity
+        second: 1.41999996
+      data:
+        first:
+          name: _HeightCutOff
+        second: .25
     m_Colors:
       data:
         first:

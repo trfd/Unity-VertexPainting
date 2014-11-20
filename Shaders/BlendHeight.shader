@@ -1,9 +1,11 @@
-﻿Shader "VertexPainting/BlendPlain" 
+﻿Shader "VertexPainting/BlendHeight" 
 {
 	Properties 
 	{
 		_MainTex ("Base (RGBA)", 2D) = "white" {}
 		_SecondTex ("Secondary Texture (RGBA)",2D) = "white" {}
+		_HeightMap ("Height Map",2D) = "white" {}
+		_HeightCutOff("_Height CutOff",float) = 0.25
 		_NormalDisplacementIntensity("Normal Displacement Intensity",float) = 1.0
 	}
 
@@ -33,9 +35,12 @@ SubShader
         };
 
 		float _NormalDisplacementIntensity;
-        
+		float _HeightCutOff;
+
+                        
 		sampler2D _MainTex;
 		sampler2D _SecondTex;
+		sampler2D _HeightMap;
 
         v2f vert (appdata v) 
 		{
@@ -45,10 +50,14 @@ SubShader
 			o.uv = v.texcoord;
             return o;
         }
-        
+		
         fixed4 frag (v2f i) : COLOR0 
 		{ 
-			return lerp(tex2D(_MainTex,i.uv.xy),tex2D(_SecondTex,i.uv.xy),i.color.r);
+			float blendFactor = i.color.r * (1.0-tex2D(_HeightMap,i.uv.xy).r) + i.color.r;
+			
+			blendFactor = clamp(pow(blendFactor,15.0),0.0,1.0);
+			
+			return lerp(tex2D(_MainTex,i.uv.xy),tex2D(_SecondTex,i.uv.xy),blendFactor);
 		}
         ENDCG
     }

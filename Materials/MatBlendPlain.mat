@@ -7,7 +7,7 @@ Material:
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 0}
   m_Name: MatBlendPlain
-  m_Shader: {fileID: 4800000, guid: 8e037e5a0a4b72a4199227f2bdf270d7, type: 3}
+  m_Shader: {fileID: 4800000, guid: 72d80c25c64414058b33997ee72e329c, type: 3}
   m_ShaderKeywords: []
   m_CustomRenderQueue: -1
   m_SavedProperties:
@@ -31,7 +31,7 @@ Material:
       data:
         first:
           name: _NormalDisplacementIntensity
-        second: .300000012
+        second: 11.3599997
     m_Colors:
       data:
         first:
