@@ -55,7 +55,7 @@ SubShader
 		{ 
 			float blendFactor = i.color.r * (1.0-tex2D(_HeightMap,i.uv.xy).r) + i.color.r;
 			
-			blendFactor = clamp(pow(blendFactor,15.0),0.0,1.0);
+			blendFactor = clamp(pow(blendFactor,20.0),0.0,1.0);
 			
 			return lerp(tex2D(_MainTex,i.uv.xy),tex2D(_SecondTex,i.uv.xy),blendFactor);
 		}

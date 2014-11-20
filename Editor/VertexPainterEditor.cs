@@ -170,9 +170,9 @@ public class VertexPainterEditor : Editor
 		if(m_painter == null)
 			m_painter = (VertexPainter) target;
 
-		m_painter.BrushRadius = EditorGUILayout.Slider("Size",m_painter.BrushRadius,0,20);
+		m_painter.BrushRadius = EditorGUILayout.Slider("Size",m_painter.BrushRadius,0f,10f);
 
-		m_painter.BrushIntensity = EditorGUILayout.Slider("Intensity",m_painter.BrushIntensity,-1,1);
+		m_painter.BrushIntensity = EditorGUILayout.Slider("Intensity",m_painter.BrushIntensity,-0.1f,0.1f);
 
 		m_painter.BrushChannel = (ColorChannel) GUILayout.Toolbar(
 			(int)m_painter.BrushChannel,s_channelLabels);
@@ -205,7 +205,6 @@ public class VertexPainterEditor : Editor
 			m_painter.PreviewMaterial = (Material) EditorGUILayout.ObjectField("Preview Material",m_painter.PreviewMaterial,typeof(Material),false);
 
 			m_painter.BrushFalloff = EditorGUILayout.CurveField("Falloff Curve", m_painter.BrushFalloff);
-
 		}
 	}
 
