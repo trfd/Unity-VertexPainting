@@ -85,6 +85,10 @@ public class VertexPainterEditor : Editor
 				Event.current.Use();
 			}
 		}
+		else if(Event.current.isKey && Event.current.keyCode == KeyCode.Escape)
+		{
+			m_painter.ResetMeshColors();
+		}
 
 		if(m_isMouseDown)
 			PaintVertices(m_lastRaycastHit.point);
@@ -192,13 +196,6 @@ public class VertexPainterEditor : Editor
 		}
 
 		EditorGUILayout.Space();
-
-		/*
-		if(GUILayout.Button("Reset"))
-		{
-			m_painter.ResetMeshColors();
-		}
-		*/
 
 		EditorGUILayout.HelpBox("Press Esc. to reset vertices colors",MessageType.Info);
 
