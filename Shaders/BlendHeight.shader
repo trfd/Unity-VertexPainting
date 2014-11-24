@@ -2,64 +2,75 @@
 {
 	Properties 
 	{
-		_MainTex ("Base (RGBA)", 2D) = "white" {}
-		_SecondTex ("Secondary Texture (RGBA)",2D) = "white" {}
-		_HeightMap ("Height Map",2D) = "white" {}
+		_Color ("Color ",Color) = (1.0 , 1.0 , 1.0 , 1.0)
+		_MainTex       ("Base (RGBA)"              , 2D) = "white" {}
+		_SecondTex     ("Secondary Texture (RGBA)" , 2D) = "white" {}
+		_MainBumpMap   ("Base Bump Map (RGB)"      , 2D) = "white" {}
+		_SecondBumpMap ("Secondary Bump Map (RGB)" , 2D) = "white" {}
+		_MainSpecTex   ("Base Spec (R) Diffuse (A)", 2D) = "white" {}
+		_SecondSpecTex ("Base Spec (R) Diffuse (A)", 2D) = "white" {}
+		_HeightMap     ("Height Map"               , 2D) = "white" {}
 		_HeightMapPower("Height Map Power",float) = 20.0
 		_NormalDisplacementIntensity("Normal Displacement Intensity",float) = 1.0
 	}
 
-SubShader 
-{
-    Pass 
-    {    
+	SubShader 
+	{
         CGPROGRAM
 
-        #pragma vertex vert
-        #pragma fragment frag
-
-        // vertex input: position, color
-        struct appdata 
-		{
-            float4 vertex : POSITION;
-            fixed4 color : COLOR;
-			float3 normal : NORMAL;
-			float4 texcoord : TEXCOORD0;
-        };
-
-        struct v2f 
-		{
-            float4 pos : SV_POSITION;
-            fixed4 color : COLOR;
-			float4 uv : TEXCOORD0;
-        };
+        #pragma surface surf BlinnPhong vertex:vert
 
 		float _NormalDisplacementIntensity;
 		float _HeightMapPower;
-
                         
 		sampler2D _MainTex;
 		sampler2D _SecondTex;
+		
+		sampler2D _MainBumpMap;
+		sampler2D _SecondBumpMap;
+		
+		sampler2D _MainSpecTex;
+		sampler2D _SecondSpecTex;
+		
 		sampler2D _HeightMap;
 
-        v2f vert (appdata v) 
+		fixed4 _Color;
+
+		struct Input 
 		{
-            v2f o;
-            o.pos = mul( UNITY_MATRIX_MVP, v.vertex) + float4(_NormalDisplacementIntensity * v.color.b * v.normal , 0.0);
-            o.color = v.color;
-			o.uv = v.texcoord;
-            return o;
-        }
+			float2 uv_MainTex;
+			float2 uv_BumpMap;
+			float4 color : COLOR;
+		};
+
+		void vert (inout appdata_full v) 
+		{
+        	v.vertex.xyz += _NormalDisplacementIntensity * v.color.b * v.normal;
+      	}
+
+		void surf (Input IN, inout SurfaceOutput o) 
+		{
+			float4 mainTexColor        = tex2D(_MainTex  , IN.uv_MainTex.xy);
+			float4 secondTexColor      = tex2D(_SecondTex, IN.uv_MainTex.xy);
+			
+			float3 _mainBumpNormal     = UnpackNormal(tex2D(_MainBumpMap,   IN.uv_BumpMap));
+			float3 _secondBumpNormal   = UnpackNormal(tex2D(_SecondBumpMap, IN.uv_BumpMap));
+			
+			float4 mainSpecDiffColor   = tex2D(_MainSpecTex  , IN.uv_MainTex.xy);
+			float4 secondSpecDiffColor = tex2D(_SecondSpecTex, IN.uv_MainTex.xy);
 		
-        fixed4 frag (v2f i) : COLOR0 
-		{ 
-			float blendFactor = i.color.r * (1.0-tex2D(_HeightMap,i.uv.xy).r) + i.color.r + i.color.a;
+			float blendFactor = IN.color.r * (1.0-tex2D(_HeightMap,IN.uv_MainTex.xy).r) + 
+								IN.color.r;
 			
 			blendFactor = clamp(pow(blendFactor,_HeightMapPower),0.0,1.0);
 			
-			return lerp(tex2D(_MainTex,i.uv.xy),tex2D(_SecondTex,i.uv.xy),blendFactor);
+			o.Albedo   = _Color.rgb * lerp(mainTexColor,        secondTexColor,        blendFactor).rgb;
+			o.Gloss    =              lerp(mainSpecDiffColor.a, secondSpecDiffColor.a, blendFactor);
+			o.Alpha    = _Color.a *   lerp(mainTexColor,        secondTexColor,        blendFactor).a;
+			o.Specular =              lerp(mainSpecDiffColor.r, secondSpecDiffColor.r, blendFactor);
+			o.Normal   =              lerp(_mainBumpNormal,     _secondBumpNormal,     blendFactor);
 		}
+		
         ENDCG
-    }
-}
+	}
 }
