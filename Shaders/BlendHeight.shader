@@ -5,7 +5,7 @@
 		_MainTex ("Base (RGBA)", 2D) = "white" {}
 		_SecondTex ("Secondary Texture (RGBA)",2D) = "white" {}
 		_HeightMap ("Height Map",2D) = "white" {}
-		_HeightCutOff("_Height CutOff",float) = 0.25
+		_HeightMapPower("Height Map Power",float) = 20.0
 		_NormalDisplacementIntensity("Normal Displacement Intensity",float) = 1.0
 	}
 
@@ -35,7 +35,7 @@ SubShader
         };
 
 		float _NormalDisplacementIntensity;
-		float _HeightCutOff;
+		float _HeightMapPower;
 
                         
 		sampler2D _MainTex;
@@ -53,9 +53,9 @@ SubShader
 		
         fixed4 frag (v2f i) : COLOR0 
 		{ 
-			float blendFactor = i.color.r * (1.0-tex2D(_HeightMap,i.uv.xy).r) + i.color.r;
+			float blendFactor = i.color.r * (1.0-tex2D(_HeightMap,i.uv.xy).r) + i.color.r + i.color.a;
 			
-			blendFactor = clamp(pow(blendFactor,20.0),0.0,1.0);
+			blendFactor = clamp(pow(blendFactor,_HeightMapPower),0.0,1.0);
 			
 			return lerp(tex2D(_MainTex,i.uv.xy),tex2D(_SecondTex,i.uv.xy),blendFactor);
 		}

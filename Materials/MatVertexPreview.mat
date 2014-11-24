@@ -7,7 +7,7 @@ Material:
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 0}
   m_Name: MatVertexPreview
-  m_Shader: {fileID: 4800000, guid: 740c238344b44804a9193361135d0909, type: 3}
+  m_Shader: {fileID: 4800000, guid: 001a5c75c7fe94ff2b44666e3f6acf41, type: 3}
   m_ShaderKeywords: []
   m_CustomRenderQueue: -1
   m_SavedProperties:
@@ -20,7 +20,29 @@ Material:
           m_Texture: {fileID: 0}
           m_Scale: {x: 1, y: 1}
           m_Offset: {x: 0, y: 0}
+      data:
+        first:
+          name: _SecondTex
+        second:
+          m_Texture: {fileID: 0}
+          m_Scale: {x: 1, y: 1}
+          m_Offset: {x: 0, y: 0}
+      data:
+        first:
+          name: _HeightMap
+        second:
+          m_Texture: {fileID: 0}
+          m_Scale: {x: 1, y: 1}
+          m_Offset: {x: 0, y: 0}
     m_Floats:
+      data:
+        first:
+          name: _NormalDisplacementIntensity
+        second: 1
+      data:
+        first:
+          name: _HeightCutOff
+        second: .25
       data:
         first:
           name: _Ampl
