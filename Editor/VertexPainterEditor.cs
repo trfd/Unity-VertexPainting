@@ -46,6 +46,10 @@ public class VertexPainterEditor : Editor
 
 	private bool m_advancedFoldout = false;
 
+	private RaycastHit m_lastRaycastHit;
+
+	private bool m_isMouseDown;
+
 	#endregion
 
 	#region SceneGUI stuff
@@ -55,26 +59,41 @@ public class VertexPainterEditor : Editor
 		if(m_painter == null)
 			m_painter = (VertexPainter) target;
 
-		m_painter.SelectedObject = HandleUtility.PickGameObject(Event.current.mousePosition,false);
+        if(Event.current.isMouse)
+        {
+            m_painter.SelectedObject = HandleUtility.PickGameObject(Event.current.mousePosition, false);
+        }
 
 		if(m_painter.SelectedObject == null)
-			return;
-
-
-		if(Event.current.isMouse)
 		{
-			RaycastHit hit;
-			
-			Physics.Raycast(HandleUtility.GUIPointToWorldRay(Event.current.mousePosition), out hit);
+			m_lastRaycastHit = new RaycastHit();
+			return;
+		}
+	
+		if(Event.current.isMouse && Event.current.button == 0)
+		{	
+			Physics.Raycast(HandleUtility.GUIPointToWorldRay(Event.current.mousePosition), out m_lastRaycastHit);
 
-			DrawBrush(hit.point,hit.normal);
-
-			if(Event.current.type == EventType.MouseDown && Event.current.button == 0)
+			if(Event.current.type == EventType.MouseDown)
 			{
-				PaintVertices(hit.point);
+				m_isMouseDown = true;
+				Event.current.Use();
+			}
+			else if(Event.current.type == EventType.MouseUp)
+			{
+				m_isMouseDown = false;
 				Event.current.Use();
 			}
 		}
+		else if(Event.current.isKey && Event.current.keyCode == KeyCode.Escape)
+		{
+			m_painter.ResetMeshColors();
+		}
+
+		if(m_isMouseDown)
+			PaintVertices(m_lastRaycastHit.point);
+
+		DrawBrush(m_lastRaycastHit.point,m_lastRaycastHit.normal);
 
 		HandleUtility.AddDefaultControl(GUIUtility.GetControlID(FocusType.Passive));
 	}
@@ -85,7 +104,7 @@ public class VertexPainterEditor : Editor
 	/// <param name="penPoint">brushPosition.</param>
 	private void PaintVertices(Vector3 brushPosition)
 	{
-		Mesh mesh = m_painter.SelectedObject.GetComponent<MeshFilter>().mesh;
+		Mesh mesh = m_painter.SelectedObject.GetComponent<MeshFilter>().sharedMesh;
 
 		if(mesh.colors == null || mesh.colors.Length != mesh.vertices.Length)
 		{
@@ -97,13 +116,15 @@ public class VertexPainterEditor : Editor
 
 		Color[] colors = mesh.colors;
 
+		float dist;
+
 		for(int i=0 ; i<mesh.vertices.Length ; i++)
 		{
 			Vector3 worldPos = m_painter.SelectedObject.transform.TransformPoint(mesh.vertices[i]);
-
-			if(Vector3.Distance(worldPos,brushPosition) < m_painter.BrushRadius )
+	
+			if((dist=Vector3.Distance(worldPos,brushPosition)) < m_painter._brushRadius )
 			{
-				colors[i] = ApplyBrush(colors[i]);
+				colors[i] = ApplyBrush(colors[i],dist);
 			}
 		}
 
@@ -115,21 +136,23 @@ public class VertexPainterEditor : Editor
 	/// </summary>
 	/// <returns>The brush.</returns>
 	/// <param name="inColor">In color.</param>
-	Color ApplyBrush(Color inColor)
+	Color ApplyBrush(Color inColor,float dist)
 	{
-		switch(m_painter.BrushChannel)
+		float intensity = m_painter._brushFalloff.Evaluate(dist / m_painter._brushRadius) * m_painter._brushIntensity;
+
+		switch(m_painter._brushChannel)
 		{
 		case ColorChannel.RED:
-			inColor.r = Mathf.Clamp01(inColor.r + m_painter.BrushIntensity);
+			inColor.r = Mathf.Clamp01(inColor.r + intensity);
 			break;
 		case ColorChannel.GREEN:
-			inColor.g = Mathf.Clamp01(inColor.g + m_painter.BrushIntensity);
+			inColor.g = Mathf.Clamp01(inColor.g + intensity);
 			break;
 		case ColorChannel.BLUE:
-			inColor.b = Mathf.Clamp01(inColor.b + m_painter.BrushIntensity);
+			inColor.b = Mathf.Clamp01(inColor.b + intensity);
 			break;
 		case ColorChannel.ALPHA:
-			inColor.a = Mathf.Clamp01(inColor.a + m_painter.BrushIntensity);
+			inColor.a = Mathf.Clamp01(inColor.a + intensity);
 			break;
 		}
 
@@ -139,7 +162,7 @@ public class VertexPainterEditor : Editor
 	private void DrawBrush(Vector3 brush, Vector3 normal)
 	{
 		Handles.color = Color.white;
-		Handles.DrawWireDisc(brush, normal, m_painter.BrushRadius);
+		Handles.DrawWireDisc(brush, normal, m_painter._brushRadius);
 	}
 
 	#endregion
@@ -148,12 +171,15 @@ public class VertexPainterEditor : Editor
 
 	public override void OnInspectorGUI()
 	{
-		m_painter.BrushRadius = EditorGUILayout.Slider("Size",m_painter.BrushRadius,0,20);
+		if(m_painter == null)
+			m_painter = (VertexPainter) target;
 
-		m_painter.BrushIntensity = EditorGUILayout.Slider("Intensity",m_painter.BrushIntensity,-1,1);
+		m_painter._brushRadius = EditorGUILayout.Slider("Size",m_painter._brushRadius,0f,10f);
 
-		m_painter.BrushChannel = (ColorChannel) GUILayout.Toolbar(
-			(int)m_painter.BrushChannel,s_channelLabels);
+		m_painter._brushIntensity = EditorGUILayout.Slider("Intensity",m_painter._brushIntensity,-0.1f,0.1f);
+
+		m_painter._brushChannel = (ColorChannel) GUILayout.Toolbar(
+			(int)m_painter._brushChannel,s_channelLabels);
 
 		EditorGUILayout.Space();
 
@@ -171,17 +197,18 @@ public class VertexPainterEditor : Editor
 
 		EditorGUILayout.Space();
 
-		if(GUILayout.Button("Reset"))
-		{
-			m_painter.ResetMeshColors();
-		}
+		EditorGUILayout.HelpBox("Press Esc. to reset vertices colors",MessageType.Info);
 
 		EditorGUILayout.Space();
 
 		if((m_advancedFoldout = EditorGUILayout.Foldout(m_advancedFoldout,"Advanced")))
 		{
-			m_painter.PreviewMaterial = (Material) EditorGUILayout.ObjectField("Preview Material",m_painter.PreviewMaterial,typeof(Material),false);
+			m_painter._previewMaterial = (Material) EditorGUILayout.ObjectField("Preview Material",m_painter._previewMaterial,typeof(Material),false);
+
+			m_painter._brushFalloff = EditorGUILayout.CurveField("Falloff Curve", m_painter._brushFalloff);
 		}
+
+		EditorUtility.SetDirty(m_painter);
 	}
 
 	#endregion

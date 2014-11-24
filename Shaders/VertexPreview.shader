@@ -28,6 +28,7 @@ SubShader
         }
         
         fixed4 frag (v2f i) : COLOR0 { return i.color; }
+        
         ENDCG
     }
 }
