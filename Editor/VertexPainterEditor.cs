@@ -118,7 +118,7 @@ public class VertexPainterEditor : Editor
 		{
 			Vector3 worldPos = m_painter.SelectedObject.transform.TransformPoint(mesh.vertices[i]);
 	
-			if((dist=Vector3.Distance(worldPos,brushPosition)) < m_painter.BrushRadius )
+			if((dist=Vector3.Distance(worldPos,brushPosition)) < m_painter._brushRadius )
 			{
 				colors[i] = ApplyBrush(colors[i],dist);
 			}
@@ -134,9 +134,9 @@ public class VertexPainterEditor : Editor
 	/// <param name="inColor">In color.</param>
 	Color ApplyBrush(Color inColor,float dist)
 	{
-		float intensity = m_painter.BrushFalloff.Evaluate(dist / m_painter.BrushRadius) * m_painter.BrushIntensity;
+		float intensity = m_painter._brushFalloff.Evaluate(dist / m_painter._brushRadius) * m_painter._brushIntensity;
 
-		switch(m_painter.BrushChannel)
+		switch(m_painter._brushChannel)
 		{
 		case ColorChannel.RED:
 			inColor.r = Mathf.Clamp01(inColor.r + intensity);
@@ -158,7 +158,7 @@ public class VertexPainterEditor : Editor
 	private void DrawBrush(Vector3 brush, Vector3 normal)
 	{
 		Handles.color = Color.white;
-		Handles.DrawWireDisc(brush, normal, m_painter.BrushRadius);
+		Handles.DrawWireDisc(brush, normal, m_painter._brushRadius);
 	}
 
 	#endregion
@@ -170,12 +170,12 @@ public class VertexPainterEditor : Editor
 		if(m_painter == null)
 			m_painter = (VertexPainter) target;
 
-		m_painter.BrushRadius = EditorGUILayout.Slider("Size",m_painter.BrushRadius,0f,10f);
+		m_painter._brushRadius = EditorGUILayout.Slider("Size",m_painter._brushRadius,0f,10f);
 
-		m_painter.BrushIntensity = EditorGUILayout.Slider("Intensity",m_painter.BrushIntensity,-0.1f,0.1f);
+		m_painter._brushIntensity = EditorGUILayout.Slider("Intensity",m_painter._brushIntensity,-0.1f,0.1f);
 
-		m_painter.BrushChannel = (ColorChannel) GUILayout.Toolbar(
-			(int)m_painter.BrushChannel,s_channelLabels);
+		m_painter._brushChannel = (ColorChannel) GUILayout.Toolbar(
+			(int)m_painter._brushChannel,s_channelLabels);
 
 		EditorGUILayout.Space();
 
@@ -193,19 +193,25 @@ public class VertexPainterEditor : Editor
 
 		EditorGUILayout.Space();
 
+		/*
 		if(GUILayout.Button("Reset"))
 		{
 			m_painter.ResetMeshColors();
 		}
+		*/
+
+		EditorGUILayout.HelpBox("Press Esc. to reset vertices colors",MessageType.Info);
 
 		EditorGUILayout.Space();
 
 		if((m_advancedFoldout = EditorGUILayout.Foldout(m_advancedFoldout,"Advanced")))
 		{
-			m_painter.PreviewMaterial = (Material) EditorGUILayout.ObjectField("Preview Material",m_painter.PreviewMaterial,typeof(Material),false);
+			m_painter._previewMaterial = (Material) EditorGUILayout.ObjectField("Preview Material",m_painter._previewMaterial,typeof(Material),false);
 
-			m_painter.BrushFalloff = EditorGUILayout.CurveField("Falloff Curve", m_painter.BrushFalloff);
+			m_painter._brushFalloff = EditorGUILayout.CurveField("Falloff Curve", m_painter._brushFalloff);
 		}
+
+		EditorUtility.SetDirty(m_painter);
 	}
 
 	#endregion

@@ -37,93 +37,162 @@ public enum ColorChannel
 
 public class VertexPainter : MonoBehaviour
 {
+	public class Selection
+	{
+		#region Public Members
+
+		/// <summary>
+		/// GameObject over which the mouse was during the last scene update.
+		/// </summary>
+		public GameObject _selectedObject;
+
+		/// <summary>
+		/// Backup of original material current selected object is using.
+		/// When showing raw painting material is replaced.
+		/// </summary>
+		public Material _objectBackupMaterial;
+
+		/// <summary>
+		/// Holds whether or not the painter is showing preview.
+		/// </summary>
+		public bool _isShowingPreview = false;
+
+		/// <summary>
+		/// The collider created to allow Physics raycasts.
+		/// </summary>
+		public MeshCollider _usedCollider;
+
+		/// <summary>
+		/// Current Mesh painting on.
+		/// </summary>
+		public Mesh _mesh;
+
+		#endregion
+
+		#region Interface
+
+		public Selection(GameObject obj)
+		{
+			_selectedObject = obj;
+
+			MeshFilter filter = _selectedObject.GetComponent<MeshFilter>();
+			
+			if(filter == null)
+			{
+				Debug.LogError("Vertex painter can not paint on object that does not contain any mesh");
+				return;
+			}
+			
+			_mesh = filter.sharedMesh;
+			
+			if(_selectedObject.GetComponent<Collider>() == null)
+			{
+				_usedCollider = _selectedObject.AddComponent<MeshCollider>();
+				
+				_usedCollider.sharedMesh = _mesh;
+			}
+
+			if(_objectBackupMaterial == null)
+			{
+				MeshRenderer renderer = _selectedObject.GetComponent<MeshRenderer>();
+
+				_objectBackupMaterial = renderer.sharedMaterial;
+			}
+		}
+
+		public void Restore()
+		{
+			RestoreCollider();
+
+			RestoreMaterial();
+		}
+
+		public void ShowPreview(Material previewMat)
+		{
+			_isShowingPreview = true;
+
+			MeshRenderer renderer = _selectedObject.GetComponent<MeshRenderer>();
+
+			if(_objectBackupMaterial == null)
+				_objectBackupMaterial = renderer.sharedMaterial;
+
+			renderer.material = previewMat;
+		}
+
+		public void RestoreMaterial()
+		{
+			if(_objectBackupMaterial == null)
+				return;
+
+			MeshRenderer renderer = _selectedObject.GetComponent<MeshRenderer>();
+
+			renderer.material = _objectBackupMaterial;
+		}
+
+		public void ResetColors()
+		{
+			Color[] colors = new Color[_mesh.colors.Length];
+
+			for(int i=0 ; i<_mesh.vertices.Length ; i++)
+			{
+				colors[i] = Color.black;
+				colors[i].a = 0f;
+			}
+
+			_mesh.colors = colors;
+		}
+
+		public void RestoreCollider()
+		{
+			if(_usedCollider == null)
+				return;
+
+			DestroyImmediate(_usedCollider);
+			_usedCollider = null;
+		}
+
+		#endregion
+	}
+
 	#region Private Members
-
-	/// <summary>
-	/// Backup of original material current selected object is using.
-	/// When showing raw painting material is replaced.
-	/// </summary>
-	private Material m_objectBackupMaterial;
-
-	/// <summary>
-	/// Color channel on which painter is currently painting.
-	/// </summary>
-	private ColorChannel m_currChannel;
-
-	/// <summary>
-	/// GameObject over which the mouse was during the last scene update.
-	/// </summary>
-	private GameObject m_selectedObject;
-
-	/// <summary>
-	/// Current Mesh painting on.
-	/// </summary>
-	private Mesh m_currMesh;
 	
-	/// <summary>
-	/// The collider created to allow Physics raycasts.
-	/// </summary>
-	private MeshCollider m_usedCollider;
+	private Selection m_currSelection;
 
-	/// <summary>
-	/// Holds whether or not the painter is showing preview.
-	/// </summary>
-	private bool m_isShowingPreview = false;
+	private bool m_previewMode;
 
 	#endregion
 
-	#region Properties
-
-	/// <summary>
-	/// Material used to preview raw painting.
-	/// </summary>
-	/// <value>The preview material.</value>
-	[UnityEngine.SerializeField]
-	public Material PreviewMaterial
-	{
-		get; set;
-	}
-
+	#region Public Members
+	
+	public Material _previewMaterial;
+	
 	/// <summary>
 	/// Size of the brush, in world coordinates.
 	/// </summary>
 	/// <value>The pen radius.</value>
-	[UnityEngine.SerializeField]
-	public float BrushRadius
-	{
-		get; set;
-	}
-
+	public float _brushRadius;
+	
 	/// <summary>
 	/// Intensity of brush 
 	/// </summary>
 	/// <value>The brush intensity.</value>
-	[UnityEngine.SerializeField]
-	public float BrushIntensity
-	{
-		get; set;
-	}
-
+	public float _brushIntensity;
+	
 	/// <summary>
 	/// Brush fall off.
 	/// </summary>
 	/// <value>The brush falloff.</value>
-	[UnityEngine.SerializeField]
-	public AnimationCurve BrushFalloff
-	{
-		get; set;
-	}
-
+	public AnimationCurve _brushFalloff;
+	
 	/// <summary>
 	/// Color channel in which brush paints vertices.
 	/// </summary>
 	/// <value>The color of the brush.</value>
-	[UnityEngine.SerializeField]
-	public ColorChannel BrushChannel
-	{
-		get{ return m_currChannel;  }
-		set{ m_currChannel = value; }
-	}
+	public ColorChannel _brushChannel;
+
+	#endregion
+
+	#region Properties
 
 	/// <summary>
 	/// Object in which lives the current mesh.
@@ -131,11 +200,16 @@ public class VertexPainter : MonoBehaviour
 	/// <value>The selected object.</value>
 	public GameObject SelectedObject
 	{
-		get{ return m_selectedObject; }
+		get
+		{
+			if(m_currSelection != null) 
+				return m_currSelection._selectedObject; 
+			return null;
+		}
 
 		set
 		{
-			if(m_selectedObject != value)
+			if(m_currSelection == null || m_currSelection._selectedObject != value)
 				ChangeSelectedObject(value);
 		}
 	}
@@ -146,7 +220,7 @@ public class VertexPainter : MonoBehaviour
 	/// <value>The current mesh.</value>
 	public Mesh CurrentMesh
 	{
-		get{ return m_currMesh; }
+		get{ return m_currSelection._mesh; }
 	}
 
 	/// <summary>
@@ -155,10 +229,10 @@ public class VertexPainter : MonoBehaviour
 	/// <value><c>true</c> if this instance is previewing raw; otherwise, <c>false</c>.</value>
 	public bool IsPreviewingRaw
 	{
-		get{ return m_isShowingPreview; }
+		get{ return m_previewMode; }
 		set
 		{
-			if(m_isShowingPreview == value)
+			if(m_previewMode == value)
 				return;
 
 			ChangePreview(value);
@@ -171,7 +245,7 @@ public class VertexPainter : MonoBehaviour
 
 	public VertexPainter()
 	{
-		BrushFalloff = new AnimationCurve();
+		_brushFalloff = new AnimationCurve();
 	}
 
 	#endregion
@@ -180,6 +254,8 @@ public class VertexPainter : MonoBehaviour
 
 	public void ResetMeshColors()
 	{
+		if(m_currSelection != null)
+			m_currSelection.ResetColors();
 	}
 
 	#endregion
@@ -188,70 +264,34 @@ public class VertexPainter : MonoBehaviour
 
 	private void ChangeSelectedObject(GameObject newObject)
 	{
-		if(m_usedCollider != null)
+		if(m_currSelection != null)
 		{
-			DestroyImmediate(m_usedCollider);
-			m_usedCollider = null;
+			m_currSelection.Restore();
 		}
 
-		if(m_objectBackupMaterial != null)
-		{
-			ChangePreview(false);
-		}
-		
 		if(newObject == null)
-			return;
-		
-		m_selectedObject = newObject;
-
-		MeshFilter filter = m_selectedObject.GetComponent<MeshFilter>();
-
-		if(filter == null)
 		{
-			Debug.LogError("Vertex painter can not paint on object that does not contain any mesh");
-			m_selectedObject = null;
-			m_currMesh = null;
-			m_objectBackupMaterial = null;
+			m_currSelection = null;
 			return;
 		}
 
-		m_currMesh = filter.sharedMesh;
+		m_currSelection = new Selection(newObject);
 
-		if(m_selectedObject.GetComponent<Collider>() == null)
-		{
-			m_usedCollider = m_selectedObject.AddComponent<MeshCollider>();
-			
-			m_usedCollider.sharedMesh = m_currMesh;
-		}
+		if(m_previewMode)
+			m_currSelection.ShowPreview(_previewMaterial);
 	}
-	                                 
+
 	private void ChangePreview(bool isPreviewing)
 	{
-		if(m_selectedObject == null)
+		m_previewMode = isPreviewing;
+
+		if(m_currSelection == null)
 			return;
 
-		if(PreviewMaterial == null)
-		{
-			Debug.LogError("Can not preview: Preview material not set");
-			return;
-		}
-
-		m_isShowingPreview = isPreviewing;
-
-		MeshRenderer renderer = m_selectedObject.GetComponent<MeshRenderer>();
-
-		if(m_isShowingPreview)
-		{
-			m_objectBackupMaterial = renderer.sharedMaterial;
-			renderer.material = PreviewMaterial;
-			Debug.Log("Set Preview Material: "+this.PreviewMaterial);
-		}
+		if(m_previewMode)
+			m_currSelection.ShowPreview(_previewMaterial);
 		else
-		{
-			renderer.material = m_objectBackupMaterial;
-			m_objectBackupMaterial = null;
-			Debug.Log("Unset Preview Material: "+this.PreviewMaterial);
-		}
+			m_currSelection.RestoreMaterial();
 	}
 
 	#endregion
