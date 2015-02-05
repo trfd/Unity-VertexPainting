@@ -40,8 +40,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _previewMaterial: {fileID: 2100000, guid: 755ec40038dcf4b93ad508413c66e01e, type: 2}
-  _brushRadius: 0
-  _brushIntensity: 0
+  _brushRadius: 2.29999995
+  _brushIntensity: .0289999992
   _brushFalloff:
     serializedVersion: 2
     m_Curve:

@@ -104,7 +104,19 @@ public class VertexPainterEditor : Editor
 	/// <param name="penPoint">brushPosition.</param>
 	private void PaintVertices(Vector3 brushPosition)
 	{
-		Mesh mesh = m_painter.SelectedObject.GetComponent<MeshFilter>().sharedMesh;
+		MeshFilter filter = m_painter.SelectedObject.GetComponent<MeshFilter>();
+		ModifiedMesh mMesh = m_painter.SelectedObject.GetComponent<ModifiedMesh>();
+
+		if(mMesh == null)
+			mMesh = m_painter.SelectedObject.AddComponent<ModifiedMesh>();
+
+		Mesh mesh;
+
+		if(mMesh._modifiedMesh == null)
+			mMesh._modifiedMesh = (Mesh) Object.Instantiate(filter.sharedMesh);
+
+		mesh = mMesh._modifiedMesh;
+		filter.sharedMesh = mMesh._modifiedMesh;
 
 		if(mesh.colors == null || mesh.colors.Length != mesh.vertices.Length)
 		{
@@ -129,6 +141,8 @@ public class VertexPainterEditor : Editor
 		}
 
 		mesh.colors = colors;
+
+		EditorUtility.SetDirty(mesh);
 	}
 
 	/// <summary>
